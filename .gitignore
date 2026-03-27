@@ -1,0 +1,16 @@
+# Visual Studio
+.vs/
+*.sln
+*.suo
+
+# Python
+__pycache__/
+*.pyc
+
+# Output folders
+output/
+Extract/
+
+# OS
+Thumbs.db
+.DS_Store
