@@ -18,9 +18,7 @@ def extract_full_summary(html_file):
     with open(html_file, "r", encoding="utf-8", errors="ignore") as f:
         soup = BeautifulSoup(f, "lxml")
 
-    # =============================
-    # 1️⃣ TRANSACTION TABLE
-    # =============================
+  
     table = soup.find("table", {"id": "TransactionsTable"})
 
     transactions_df = None
@@ -36,9 +34,7 @@ def extract_full_summary(html_file):
             transactions_df = pd.DataFrame(rows[1:], columns=rows[0])
             transactions_df.columns = transactions_df.columns.str.strip()
 
-    # =============================
-    # 2️⃣ SUMMARY (FIXED LOGIC)
-    # =============================
+    
     summary_data = {}
 
     # 🔥 Extract PERIOD
