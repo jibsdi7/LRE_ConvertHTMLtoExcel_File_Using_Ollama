@@ -88,4 +88,7 @@ if __name__ == "__main__":
 
 #use case 1 --> get latest LRE report`
 #use case 2 -->process report from C:\Ahold\Projects\BIDM\Result\NewResultPath
+#process report from C:\\Ahold\\Projects\\BIDM\\Result\\NewResultPath
 #use case 3 --> convert latest zip from C:\Ahold\Projects\CC360\Result
+#convert latest zip from C:\\Ahold\\Projects\\CC360\\Result
+# uvicorn App:app --reload
