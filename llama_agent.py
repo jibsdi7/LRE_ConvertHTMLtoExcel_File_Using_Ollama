@@ -9,7 +9,12 @@ def decide_input(prompt):
             messages=[
                 {
                     "role": "system",
-                    "content": "Extract the folder path from the user prompt. Return JSON with key 'input_path'."
+                    "content": (
+                        "Extract the folder path from the user prompt. "
+                        "Return ONLY valid JSON in this format: "
+                        '{"input_path": "C:\\\\path\\\\to\\\\folder"} '
+                        "If no path is found, return {}"
+                    )
                 },
                 {
                     "role": "user",
@@ -18,14 +23,23 @@ def decide_input(prompt):
             ]
         )
 
-        content = response["message"]["content"]
+        content = response["message"]["content"].strip()
 
-        # Extract JSON
-        start = content.find("{")
-        end = content.rfind("}") + 1
-        json_str = content[start:end]
+        print("🧠 LLaMA Raw Response:", content)
 
-        return json.loads(json_str)
+        # 🔥 Try parsing safely
+        try:
+            return json.loads(content)
+        except:
+            # 🔁 Extract JSON manually if extra text present
+            start = content.find("{")
+            end = content.rfind("}") + 1
+
+            if start != -1 and end != -1:
+                json_str = content[start:end]
+                return json.loads(json_str)
+
+        return {}
 
     except Exception as e:
         print(f"❌ LLaMA error: {e}")
