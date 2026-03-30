@@ -1,0 +1,323 @@
+# 📘 Convert HTML to Excel – Prompt-Based Automation Agent
+
+## 🚀 Overview
+
+This project is a **prompt-driven automation system** that:
+
+* 📦 Reads LRE ZIP reports
+* 📂 Extracts and processes them
+* 📊 Converts HTML/CSV data into Excel
+* 📈 Compares multiple reports with trend analysis
+* 📧 Sends reports via Outlook email
+
+All actions are controlled using **natural language prompts**.
+
+---
+
+# 🧱 Project Architecture
+
+```
+User Prompt → FastAPI → LLaMA (optional parsing) → Python Engine → Output (Excel / Email)
+```
+
+---
+
+# 📦 Dependencies & Installation
+
+## 🔧 Required Python Packages
+
+Install using:
+
+```bash
+pip install fastapi uvicorn pandas beautifulsoup4 lxml pywin32
+```
+
+---
+
+## 📚 Dependency Details
+
+| Library          | Purpose                              |
+| ---------------- | ------------------------------------ |
+| `fastapi`        | API framework                        |
+| `uvicorn`        | ASGI server to run FastAPI           |
+| `pandas`         | Data processing & Excel generation   |
+| `beautifulsoup4` | HTML parsing                         |
+| `lxml`           | Faster HTML/XML parser               |
+| `pywin32`        | Outlook email automation             |
+| `zipfile`        | Extract ZIP files (built-in)         |
+| `os`             | File system handling (built-in)      |
+| `re`             | Regex for parsing prompts (built-in) |
+
+---
+
+# 📂 Folder Structure
+
+```
+Convert_HTML_Excel/
+│
+├── app.py                # FastAPI service (main entry)
+├── utils.py              # Core logic (unzip, excel, compare, email)
+├── llama_agent.py        # Prompt parsing (optional)
+├── output/               # Generated Excel files
+├── Extract/              # Extracted ZIP contents
+```
+
+---
+
+# ⚙️ Features
+
+## ✅ 1. Process Reports
+
+* Reads ZIP files from a folder
+* Extracts and processes latest or multiple reports
+
+---
+
+## ✅ 2. Convert to Excel
+
+* Extracts:
+
+  * Transaction data
+  * Summary statistics
+* Saves into structured Excel
+
+---
+
+## ✅ 3. Compare Reports
+
+* Compare latest **N reports**
+* Adds:
+
+| Feature          | Description                           |
+| ---------------- | ------------------------------------- |
+| Multi-file merge | Combine reports                       |
+| Trend column     | ⬆ Improved / ⬇ Degraded / ➖ No Change |
+
+---
+
+## ✅ 4. Email Integration (Outlook)
+
+* Send reports directly via Outlook
+* Supports:
+
+  * Single recipient
+  * Multiple recipients
+  * Comparison reports
+
+---
+
+# 🧠 Prompt-Based Commands
+
+## 📊 Basic Commands
+
+### 👉 Get latest report
+
+```
+get latest lre report
+```
+
+---
+
+### 👉 Process specific path
+
+```
+process report from C:\Ahold\Projects\BIDM\Result
+```
+
+---
+
+### 👉 Process multiple reports
+
+```
+process latest 3 reports
+```
+
+---
+
+### 👉 Process all reports
+
+```
+process result of all files
+```
+
+---
+
+## 📈 Comparison Commands
+
+### 👉 Compare reports
+
+```
+compare latest 2 reports
+```
+
+---
+
+### 👉 Compare multiple
+
+```
+compare latest 3 reports
+```
+
+---
+
+## 📧 Email Commands
+
+### 👉 Send latest report
+
+```
+send latest report to abc@company.com
+```
+
+---
+
+### 👉 Send to multiple users
+
+```
+send latest report to abc@company.com, xyz@company.com
+```
+
+---
+
+### 👉 Compare + Email
+
+```
+compare latest 2 reports and email to abc@company.com, xyz@company.com
+```
+
+---
+
+### 👉 Process + Email
+
+```
+process latest 3 reports and send to team@company.com
+```
+
+---
+
+# 📧 Email Configuration
+
+## 🔧 Requirements
+
+* Microsoft Outlook installed
+* Logged-in account
+* `pywin32` installed
+
+---
+
+## 👤 Sender Configuration
+
+To send from a specific account:
+
+```python
+sender="dibyendu.dey@adusa.com"
+```
+
+⚠️ Must:
+
+* Exist in Outlook
+* Have send permission
+
+---
+
+# 🔍 How Prompt Parsing Works
+
+## LLaMA Role (Optional)
+
+* Extracts:
+
+  * Input path
+  * Intent (compare, process, email)
+
+## Python Role (Core Engine)
+
+* Validates paths
+* Handles logic
+* Executes operations
+
+---
+
+# 🛡️ Safety Mechanisms
+
+* Default path fallback if LLaMA fails
+* Skips invalid ZIPs
+* Skips missing report folders
+* Validates email recipients
+
+---
+
+# 📊 Output Examples
+
+## ✔ Single Report
+
+```
+Output\Salisbury_Report.xlsx
+```
+
+---
+
+## ✔ Comparison Report
+
+```
+Output\comparison_latest_2.xlsx
+```
+
+---
+
+## ✔ Excel Trend Example
+
+| Transaction | Avg_file1 | Avg_file2 | Trend      |
+| ----------- | --------- | --------- | ---------- |
+| Login       | 2.0       | 1.5       | ⬆ Improved |
+| Search      | 1.2       | 1.8       | ⬇ Degraded |
+
+---
+
+# 🚀 Running the Application
+
+## ▶️ Start API
+
+```bash
+uvicorn app:app --reload
+```
+
+---
+
+## 🌐 Open API Docs
+
+```
+http://127.0.0.1:8000/docs
+```
+
+---
+
+## 📩 API Request Example
+
+```json
+{
+  "prompt": "compare latest 2 reports and email to abc@company.com"
+}
+```
+
+---
+
+# 🎯 Key Capabilities
+
+✔ Prompt-based automation
+✔ Multi-report processing
+✔ Trend analysis
+✔ Outlook email integration
+✔ Dynamic input paths
+✔ Scalable API design
+
+---
+
+---
+
+# 🏁 Conclusion
+
+This system is a **lightweight AI-powered automation agent** that replaces manual reporting tasks with simple prompts.
+
+👉 From raw ZIP → Excel → Comparison → Email
+All done in **one command** 🚀
+
+---

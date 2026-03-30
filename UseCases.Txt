@@ -1,0 +1,42 @@
+#use case 1 --> get latest LRE report`
+#use case 2 -->process report from C:\Ahold\Projects\BIDM\Result\NewResultPath
+#process report from C:\\Ahold\\Projects\\BIDM\\Result\\NewResultPath
+#use case 3 --> convert latest zip from C:\Ahold\Projects\CC360\Result
+#process report from C:\\Ahold\\Projects\\CC360\\Result
+#use case 4 --> convert all files from C:\\Ahold\\Projects\\agent_test\\Result
+#use case 5 --> process latest 5 reports from C:\\Ahold\\Projects\\agent_test\\Result
+
+#use case 6 -- > compare latest 3 reports
+Prompts:
+=========
+{"prompt": "get latest LRE report"}
+{"prompt": "process report from C:\\Ahold\\Projects\\BIDM\\Result\\NewResultPath"}
+{"prompt": "process latest 3 reports from C:\\Ahold\\Projects\\agent_test\\Result"}
+
+{  "prompt": "process all/every/everything reports from C:\\Ahold\\Projects\\agent_test\\Result"}
+{  "prompt": "compare latest 2 reports from C:\\Ahold\\Projects\\agent_test\\Result"}
+
+{"prompt": "compare latest 2 reports from C:\\Ahold\\Projects\\agent_test\\Result and email to Aman.Kumar3@adusa.com,Aswin.Kuttanchery@adusa.com,Roberto.Bhowmick@adusa.com"}
+
+{"prompt": "send latest comparison report from C:\\Ahold\\Projects\\agent_test\\Result to dibyendu.dey1@ibm.com"}
+
+
+#command to run API server:
+# uvicorn App:app --reload
+
+launch http://127.0.0.1:8000/docs
+
+App.py we have to run
+the API server using the command mentioned above. This will allow us to access the endpoints defined in App.py for processing the reports as per the use cases mentioned in UseCases.txt. Each endpoint will correspond to a specific use case, allowing us to get the latest LRE report, process reports from specified paths, and convert zip files as needed.
+
+main.py will contain the logic for handling the different use cases, including functions to get the latest LRE report, process reports from the specified paths, and convert zip files. We will define the necessary functions and logic to achieve these tasks based on the requirements outlined in UseCases.txt.
+
+llama_utils.py will contain utility functions that may be used across different modules, such as functions for file handling, date and time manipulation, and any other common operations that are needed for processing the reports and converting zip files.
+
+
+latest_report.py will contain the logic for fetching the latest LRE report. This may involve accessing a specific directory, identifying the most recent file based on timestamps, and returning the path or content of that report.
+
+report_processor.py will contain the logic for processing the reports from the specified paths. This may involve reading the files, performing necessary transformations or analyses, and returning the processed results.
+
+zip_converter.py will contain the logic for converting zip files from the specified paths. This may involve extracting the contents of the zip files, processing the extracted data, and returning the converted results.
+Overall, the structure of the code will be organized to handle the different use cases effectively, with clear separation of concerns and modular design to facilitate maintenance and scalability.
