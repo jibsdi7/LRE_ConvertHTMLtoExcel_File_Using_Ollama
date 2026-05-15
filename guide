@@ -1,20 +1,20 @@
 # 📘 Convert HTML to Excel – Prompt-Based Automation Agent
 
-## 🚀 Overview
+## Overview
 
 This project is a **prompt-driven automation system** that:
 
-* 📦 Reads LRE ZIP reports
-* 📂 Extracts and processes them
-* 📊 Converts HTML/CSV data into Excel
-* 📈 Compares multiple reports with trend analysis
-* 📧 Sends reports via Outlook email
+*  Reads LRE ZIP reports
+* Extracts and processes them
+*  Converts HTML/CSV data into Excel
+* Compares multiple reports with trend analysis
+*  Sends reports via Outlook email
 
 All actions are controlled using **natural language prompts**.
 
 ---
 
-# 🧱 Project Architecture
+# Project Architecture
 
 ```
 User Prompt → FastAPI → LLaMA (optional parsing) → Python Engine → Output (Excel / Email)
@@ -22,9 +22,9 @@ User Prompt → FastAPI → LLaMA (optional parsing) → Python Engine → Outpu
 
 ---
 
-# 📦 Dependencies & Installation
+# Dependencies & Installation
 
-## 🔧 Required Python Packages
+## Required Python Packages
 
 Install using:
 
@@ -34,7 +34,7 @@ pip install fastapi uvicorn pandas beautifulsoup4 lxml pywin32
 
 ---
 
-## 📚 Dependency Details
+## Dependency Details
 
 | Library          | Purpose                              |
 | ---------------- | ------------------------------------ |
@@ -50,7 +50,7 @@ pip install fastapi uvicorn pandas beautifulsoup4 lxml pywin32
 
 ---
 
-# 📂 Folder Structure
+# Folder Structure
 
 ```
 Convert_HTML_Excel/
@@ -64,16 +64,16 @@ Convert_HTML_Excel/
 
 ---
 
-# ⚙️ Features
+# Features
 
-## ✅ 1. Process Reports
+##  1. Process Reports
 
 * Reads ZIP files from a folder
 * Extracts and processes latest or multiple reports
 
 ---
 
-## ✅ 2. Convert to Excel
+## 2. Convert to Excel
 
 * Extracts:
 
@@ -83,7 +83,7 @@ Convert_HTML_Excel/
 
 ---
 
-## ✅ 3. Compare Reports
+## 3. Compare Reports
 
 * Compare latest **N reports**
 * Adds:
@@ -95,7 +95,7 @@ Convert_HTML_Excel/
 
 ---
 
-## ✅ 4. Email Integration (Outlook)
+## 4. Email Integration (Outlook)
 
 * Send reports directly via Outlook
 * Supports:
@@ -106,11 +106,11 @@ Convert_HTML_Excel/
 
 ---
 
-# 🧠 Prompt-Based Commands
+# Prompt-Based Commands
 
-## 📊 Basic Commands
+## Basic Commands
 
-### 👉 Get latest report
+### Get latest report
 
 ```
 get latest lre report
@@ -118,7 +118,7 @@ get latest lre report
 
 ---
 
-### 👉 Process specific path
+### Process specific path
 
 ```
 process report from C:\Ahold\Projects\BIDM\Result
@@ -126,7 +126,7 @@ process report from C:\Ahold\Projects\BIDM\Result
 
 ---
 
-### 👉 Process multiple reports
+### Process multiple reports
 
 ```
 process latest 3 reports
@@ -134,7 +134,7 @@ process latest 3 reports
 
 ---
 
-### 👉 Process all reports
+### Process all reports
 
 ```
 process result of all files
@@ -142,9 +142,9 @@ process result of all files
 
 ---
 
-## 📈 Comparison Commands
+##  Comparison Commands
 
-### 👉 Compare reports
+###  Compare reports
 
 ```
 compare latest 2 reports
@@ -152,7 +152,7 @@ compare latest 2 reports
 
 ---
 
-### 👉 Compare multiple
+###  Compare multiple
 
 ```
 compare latest 3 reports
@@ -160,9 +160,9 @@ compare latest 3 reports
 
 ---
 
-## 📧 Email Commands
+## Email Commands
 
-### 👉 Send latest report
+###  Send latest report
 
 ```
 send latest report to abc@company.com
@@ -170,7 +170,7 @@ send latest report to abc@company.com
 
 ---
 
-### 👉 Send to multiple users
+###  Send to multiple users
 
 ```
 send latest report to abc@company.com, xyz@company.com
@@ -178,7 +178,7 @@ send latest report to abc@company.com, xyz@company.com
 
 ---
 
-### 👉 Compare + Email
+###  Compare + Email
 
 ```
 compare latest 2 reports and email to abc@company.com, xyz@company.com
@@ -186,7 +186,7 @@ compare latest 2 reports and email to abc@company.com, xyz@company.com
 
 ---
 
-### 👉 Process + Email
+###  Process + Email
 
 ```
 process latest 3 reports and send to team@company.com
@@ -194,7 +194,7 @@ process latest 3 reports and send to team@company.com
 
 ---
 
-# 📧 Email Configuration
+#  Email Configuration
 
 ## 🔧 Requirements
 
@@ -204,7 +204,7 @@ process latest 3 reports and send to team@company.com
 
 ---
 
-## 👤 Sender Configuration
+##  Sender Configuration
 
 To send from a specific account:
 
@@ -212,14 +212,14 @@ To send from a specific account:
 sender="dibyendu.dey@adusa.com"
 ```
 
-⚠️ Must:
+ Must:
 
 * Exist in Outlook
 * Have send permission
 
 ---
 
-# 🔍 How Prompt Parsing Works
+#  How Prompt Parsing Works
 
 ## LLaMA Role (Optional)
 
@@ -236,7 +236,7 @@ sender="dibyendu.dey@adusa.com"
 
 ---
 
-# 🛡️ Safety Mechanisms
+#  Safety Mechanisms
 
 * Default path fallback if LLaMA fails
 * Skips invalid ZIPs
@@ -245,7 +245,7 @@ sender="dibyendu.dey@adusa.com"
 
 ---
 
-# 📊 Output Examples
+#  Output Examples
 
 ## ✔ Single Report
 
@@ -272,9 +272,9 @@ Output\comparison_latest_2.xlsx
 
 ---
 
-# 🚀 Running the Application
+#  Running the Application
 
-## ▶️ Start API
+##  Start API
 
 ```bash
 uvicorn app:app --reload
@@ -282,7 +282,7 @@ uvicorn app:app --reload
 
 ---
 
-## 🌐 Open API Docs
+##  Open API Docs
 
 ```
 http://127.0.0.1:8000/docs
@@ -290,7 +290,7 @@ http://127.0.0.1:8000/docs
 
 ---
 
-## 📩 API Request Example
+##  API Request Example
 
 ```json
 {
@@ -313,11 +313,11 @@ http://127.0.0.1:8000/docs
 
 ---
 
-# 🏁 Conclusion
+# Conclusion
 
 This system is a **lightweight AI-powered automation agent** that replaces manual reporting tasks with simple prompts.
 
-👉 From raw ZIP → Excel → Comparison → Email
+ From raw ZIP → Excel → Comparison → Email
 All done in **one command** 🚀
 
 ---
