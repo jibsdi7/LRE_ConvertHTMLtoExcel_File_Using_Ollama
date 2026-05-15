@@ -1,46 +1,38 @@
-import ollama
 import json
+import re
 
-
-def decide_input(prompt):
+def decide_input(prompt: str):
     try:
-        response = ollama.chat(
-            model="llama3",
-            messages=[
-                {
-                    "role": "system",
-                    "content": (
-                        "Extract the folder path from the user prompt. "
-                        "Return ONLY valid JSON in this format: "
-                        '{"input_path": "C:\\\\path\\\\to\\\\folder"} '
-                        "If no path is found, return {}"
-                    )
-                },
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ]
-        )
+        print("🧠 LLaMA Raw Response:", prompt)
 
-        content = response["message"]["content"].strip()
+        # =============================
+        # ✅ 1. Try JSON extraction
+        # =============================
+        json_match = re.search(r'\{.*?\}', prompt, re.DOTALL)
 
-        print("🧠 LLaMA Raw Response:", content)
-
-        # 🔥 Try parsing safely
-        try:
-            return json.loads(content)
-        except:
-            # 🔁 Extract JSON manually if extra text present
-            start = content.find("{")
-            end = content.rfind("}") + 1
-
-            if start != -1 and end != -1:
-                json_str = content[start:end]
+        if json_match:
+            try:
+                json_str = json_match.group(0)
                 return json.loads(json_str)
+            except Exception as e:
+                print("⚠️ JSON parse failed, fallback to regex:", e)
 
+        # =============================
+        # 🔥 2. Fallback → Extract path from prompt
+        # =============================
+        path_match = re.search(r'[a-zA-Z]:\\[^\s]+', prompt)
+
+        if path_match:
+            extracted_path = path_match.group(0)
+            print(f"✅ Extracted path: {extracted_path}")
+            return {"input_path": extracted_path}
+
+        # =============================
+        # ⚠️ Nothing found
+        # =============================
+        print("⚠️ No path found in prompt")
         return {}
 
     except Exception as e:
-        print(f"❌ LLaMA error: {e}")
+        print("❌ decide_input error:", e)
         return {}
