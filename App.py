@@ -24,7 +24,7 @@ DEFAULT_PATH = r"C:\Ahold\Projects\BIDM\Result"
 
 
 # ==========================================
-# ✅ REQUEST MODEL
+#  REQUEST MODEL
 # ==========================================
 class AgentRequest(BaseModel):
     prompt: str = Field(
@@ -34,7 +34,7 @@ class AgentRequest(BaseModel):
 
 
 # ==========================================
-# 📧 Extract emails from prompt
+#  Extract emails from prompt
 # ==========================================
 def extract_emails(prompt):
     emails = re.findall(r'[\w\.-]+@[\w\.-]+', prompt)
@@ -42,7 +42,7 @@ def extract_emails(prompt):
 
 
 # ==========================================
-# 📦 Get all ZIP files
+#  Get all ZIP files
 # ==========================================
 def get_zip_files(folder):
     return [
@@ -53,7 +53,7 @@ def get_zip_files(folder):
 
 
 # ==========================================
-# 🔢 Extract count from prompt
+#  Extract count from prompt
 # ==========================================
 def extract_count(prompt):
     match = re.search(r'latest\s+(\d+)', prompt)
@@ -65,22 +65,22 @@ def extract_count(prompt):
 
 
 # ==========================================
-# 🚀 AGENT ENDPOINT
+#  AGENT ENDPOINT
 # ==========================================
 @app.post("/agent")
 def run_agent_api(data: AgentRequest):
 
     try:
-        # ✅ Correct Pydantic usage
+        #  Correct Pydantic usage
         prompt = data.prompt.lower().strip()
 
         if not prompt:
             return {"error": "Prompt is required"}
 
-        print(f"💬 Prompt: {prompt}")
+        print(f" Prompt: {prompt}")
 
         # ==========================================
-        # 🧠 Extract input path
+        #  Extract input path
         # ==========================================
         config = decide_input(prompt)
 
@@ -90,10 +90,10 @@ def run_agent_api(data: AgentRequest):
             input_folder = config.get("input_path")
 
         # ==========================================
-        # 🔥 Safe fallback
+        #  Safe fallback
         # ==========================================
         if not input_folder or not os.path.exists(str(input_folder)):
-            print("⚠️ Using default path")
+            print("Using default path")
             input_folder = DEFAULT_PATH
 
         input_folder = str(input_folder).strip().replace('"', '')
@@ -101,10 +101,10 @@ def run_agent_api(data: AgentRequest):
         if not os.path.exists(input_folder):
             return {"error": f"Invalid path: {input_folder}"}
 
-        print(f"📂 Using folder: {input_folder}")
+        print(f" Using folder: {input_folder}")
 
         # ==========================================
-        # 📁 Setup folders
+        #  Setup folders
         # ==========================================
         extract_root = os.path.join(input_folder, "Extract")
         output_folder = os.path.join(input_folder, "Output")
@@ -113,7 +113,7 @@ def run_agent_api(data: AgentRequest):
         os.makedirs(output_folder, exist_ok=True)
 
         # ==========================================
-        # 📦 Load ZIP files
+        #  Load ZIP files
         # ==========================================
         zip_files = get_zip_files(input_folder)
 
@@ -123,23 +123,23 @@ def run_agent_api(data: AgentRequest):
         zip_files.sort(key=os.path.getmtime, reverse=True)
 
         # ==========================================
-        # 🔥 File selection
+        # File selection
         # ==========================================
         if "all" in prompt:
             selected_files = zip_files
-            print("📊 Processing ALL reports...")
+            print(" Processing ALL reports...")
 
         else:
             count = extract_count(prompt)
             selected_files = zip_files[:count]
 
-            print(f"📊 Processing latest {len(selected_files)} report(s)...")
+            print(f" Processing latest {len(selected_files)} report(s)...")
 
         output_files = []
         comparison_file = None
 
         # ==========================================
-        # 🔥 PROCESS REPORTS
+        # PROCESS REPORTS
         # ==========================================
         for zip_path in selected_files:
 
@@ -151,21 +151,21 @@ def run_agent_api(data: AgentRequest):
                 os.makedirs(extract_path, exist_ok=True)
 
                 # ==========================================
-                # 📦 Extract ZIP
+                # Extract ZIP
                 # ==========================================
                 if not os.listdir(extract_path):
                     unzip_file(zip_path, extract_path)
                 else:
-                    print(f"⏭️ Already extracted: {file_name}")
+                    print(f"Already extracted: {file_name}")
 
                 report_folder = os.path.join(extract_path, "Report")
 
                 if not os.path.exists(report_folder):
-                    print(f"⚠️ Skipping: {file_name}")
+                    print(f"Skipping: {file_name}")
                     continue
 
                 # ==========================================
-                # 📊 Generate Excel
+                #  Generate Excel
                 # ==========================================
                 output_file = os.path.join(
                     output_folder,
@@ -176,13 +176,13 @@ def run_agent_api(data: AgentRequest):
 
                 output_files.append(output_file)
 
-                print(f"✅ Done: {output_file}")
+                print(f" Done: {output_file}")
 
             except Exception as e:
-                print(f"❌ Error processing {zip_path}: {e}")
+                print(f"Error processing {zip_path}: {e}")
 
         # ==========================================
-        # 📊 COMPARE REPORTS
+        #  COMPARE REPORTS
         # ==========================================
         if "compare" in prompt:
 
@@ -199,10 +199,10 @@ def run_agent_api(data: AgentRequest):
                 comparison_file
             )
 
-            print(f"📊 Comparison created: {comparison_file}")
+            print(f" Comparison created: {comparison_file}")
 
         # ==========================================
-        # 📧 EMAIL LOGIC
+        #  EMAIL LOGIC
         # ==========================================
         if "email" in prompt or "send" in prompt:
 
@@ -213,7 +213,7 @@ def run_agent_api(data: AgentRequest):
 
             file_to_send = None
 
-            # 🔥 Prefer comparison report
+            #  Prefer comparison report
             if comparison_file and os.path.exists(comparison_file):
                 file_to_send = comparison_file
 
@@ -240,7 +240,7 @@ def run_agent_api(data: AgentRequest):
             }
 
         # ==========================================
-        # 🎯 FINAL RESPONSE
+        # FINAL RESPONSE
         # ==========================================
         if not output_files:
             return {"error": "No reports processed"}
@@ -266,7 +266,7 @@ def run_agent_api(data: AgentRequest):
 
         import traceback
 
-        print("❌ ERROR:")
+        print(" ERROR:")
         print(traceback.format_exc())
 
         return {"error": str(e)}
