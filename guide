@@ -318,6 +318,523 @@ http://127.0.0.1:8000/docs
 This system is a **lightweight AI-powered automation agent** that replaces manual reporting tasks with simple prompts.
 
  From raw ZIP → Excel → Comparison → Email
-All done in **one command** 🚀
+All done in **one command** 
 
 ---
+# LRE HTML to Excel Converter - MCP & Architecture Documentation
+
+---
+
+## 1. What is MCP (Model Context Protocol)?
+
+**MCP (Model Context Protocol)** is a protocol that enables **AI models** to interact with external systems and tools in a structured way. In this project, it allows:
+
+- **Natural Language Processing**: Accept user prompts in plain English
+- **Tool Integration**: Call Python functions based on intent
+- **Structured Communication**: Use Pydantic models for request/response validation
+- **Extensible Architecture**: Add new capabilities without changing core logic
+
+### MCP in This Project
+
+```
+User Prompt → LLaMA Agent (NLP) → Python Engine → Output (Excel/Email)
+```
+
+---
+
+## 2. Overall Architecture
+
+### 2.1 High-Level System Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    FastAPI Web Server                        │
+│                   (REST API Endpoint)                        │
+└──────────────────────┬──────────────────────────────────────┘
+                       │
+        ┌──────────────┴──────────────┐
+        │                             │
+   ┌────▼─────┐              ┌──────▼────┐
+   │ LLaMA    │              │  Pydantic  │
+   │ Agent    │              │  Models    │
+   │ (NLP)    │              │ (Validation)
+   └────┬─────┘              └──────┬────┘
+        │                           │
+        └──────────────┬────────────┘
+                       │
+        ┌──────────────▼──────────────┐
+        │   Core Python Engine        │
+        │  (utils.py)                 │
+        └──────────────┬──────────────┘
+                       │
+        ┌──────────────┴──────────────────┐
+        │                                 │
+   ┌────▼─────┐  ┌─────────┐  ┌────────▼──┐
+   │ ZIP Files │  │ HTML    │  │ Outlook   │
+   │ Extraction│  │ Parsing │  │ Email     │
+   └─────┬─────┘  └────┬────┘  └────────┬──┘
+         │             │                │
+   ┌─────▼─────────────▼────────────────▼──────┐
+   │        Output Files (Excel)                 │
+   │  - Individual Reports                       │
+   │  - Comparison Reports                       │
+   │  - Trend Analysis                           │
+   └──────────────────────────────────────────┘
+```
+
+### 2.2 Component Breakdown
+
+| Component | Purpose | Technology |
+|-----------|---------|-----------|
+| **FastAPI** | Web server & REST API | Python framework |
+| **Pydantic** | Request validation | Data validation library |
+| **LLaMA Agent** | Natural language parsing | LLM integration (optional) |
+| **Utils** | Core business logic | Python utilities |
+| **Pandas** | Excel generation | Data manipulation |
+| **BeautifulSoup** | HTML parsing | HTML/XML parser |
+| **Outlook COM** | Email sending | Win32com client |
+
+---
+
+## 3. Request-Response Flow
+
+### 3.1 API Endpoint Flow
+
+```
+1. USER SENDS PROMPT
+   └─ HTTP POST /agent
+      └─ Body: {"prompt": "process latest 3 reports from C:\\path"}
+
+2. FASTAPI RECEIVES REQUEST
+   └─ Validates with Pydantic AgentRequest model
+   └─ Extracts prompt text
+
+3. PROMPT PARSING (LLaMA Agent)
+   └─ decide_input(prompt) → Extract path & intent
+   └─ Return: {"input_path": "C:\\path", "intent": "process"}
+
+4. SAFE FALLBACK
+   └─ If path invalid → Use DEFAULT_PATH
+   └─ Validate folder exists
+
+5. FILE DISCOVERY
+   └─ Get all ZIP files from folder
+   └─ Sort by modification time (newest first)
+   └─ Select N files based on prompt
+
+6. PROCESS REPORTS
+   ├─ For each ZIP file:
+   │  ├─ Extract to Extract/ folder
+   │  ├─ Parse Report/summary.html
+   │  ├─ Generate Excel file
+   │  └─ Append to output_files[]
+
+7. COMPARE (if "compare" in prompt)
+   └─ Merge multiple Excel files
+   └─ Calculate trend analysis
+   └─ Generate comparison_latest_N.xlsx
+
+8. EMAIL (if "email"/"send" in prompt)
+   └─ Extract recipient emails from prompt
+   └─ Send via Outlook
+   └─ Return success/error
+
+9. RETURN RESPONSE
+   └─ HTTP 200 OK
+      └─ Body: {
+           "message": "Reports processed",
+           "files": ["path/to/file1.xlsx", ...]
+         }
+```
+
+### 3.2 Example Request-Response
+
+**Request:**
+```json
+{
+  "prompt": "compare latest 2 reports and email to user@company.com"
+}
+```
+
+**Processing:**
+```
+1. Parse: intent=compare, count=2, email=user@company.com
+2. Find 2 latest ZIP files
+3. Extract and convert to Excel
+4. Create comparison with trend
+5. Send email with attachment
+```
+
+**Response:**
+```json
+{
+  "message": "Comparison of 2 reports generated",
+  "file": "Output/comparison_latest_2.xlsx",
+  "email_sent": true,
+  "recipient": "user@company.com"
+}
+```
+
+---
+
+## 4. Data Flow & Processing Pipeline
+
+### 4.1 Single Report Processing
+
+```
+ZIP File (Sample1.zip)
+    │
+    ├─ Extract to: Extract/Sample1/
+    │
+    ├─ Find: Extract/Sample1/Report/summary.html
+    │
+    ├─ BeautifulSoup Parse:
+    │  ├─ Extract TransactionsTable
+    │  ├─ Extract Summary Metrics
+    │  │  ├─ Period
+    │  │  ├─ Maximum Running Vusers
+    │  │  ├─ Total Throughput
+    │  │  ├─ Average Hits per Second
+    │  │  └─ Passed Transactions Ratio
+    │
+    ├─ Pandas Convert:
+    │  ├─ Create Sheet 1: "Transactions"
+    │  │  ├─ Column: Transaction Name
+    │  │  ├─ Column: Average
+    │  │  ├─ Column: Minimum
+    │  │  ├─ Column: Maximum
+    │  │  ├─ Column: Pass
+    │  │  └─ Column: Fail
+    │  │
+    │  └─ Create Sheet 2: "Summary"
+    │     ├─ Metric | Value
+    │     ├─ Period | 2026-03-20
+    │     └─ ...
+    │
+    └─ Output: Sample1.xlsx
+```
+
+### 4.2 Multi-Report Comparison
+
+```
+File 1: Sample1.xlsx      File 2: Sample2.xlsx
+    │                             │
+    │                             │
+    ├─ Transaction1: Avg=2.5      ├─ Transaction1: Avg=2.0
+    ├─ Transaction2: Avg=1.0      ├─ Transaction2: Avg=1.5
+    └─ ...                        └─ ...
+    │                             │
+    └─────────────┬───────────────┘
+                  │
+    ┌─────────────▼───────────────┐
+    │   Merge & Align Data        │
+    │                             │
+    │ Transaction1                │
+    │ ├─ Avg_file1: 2.5           │
+    │ ├─ Avg_file2: 2.0           │
+    │ └─ Trend: ⬆ Improved        │
+    │                             │
+    │ Transaction2                │
+    │ ├─ Avg_file1: 1.0           │
+    │ ├─ Avg_file2: 1.5           │
+    │ └─ Trend: ⬇ Degraded        │
+    └─────────────┬───────────────┘
+                  │
+                  └─ Output: comparison_latest_2.xlsx
+```
+
+### 4.3 Email Integration
+
+```
+Generated Report
+    │
+    ├─ Validate recipient email
+    │
+    ├─ Create Outlook.Application COM object
+    │
+    ├─ Create MailItem
+    │  ├─ To: user@company.com
+    │  ├─ Subject: LRE Report
+    │  ├─ Body: Message text
+    │  ├─ Attachments: [Report.xlsx]
+    │  └─ Sender: dibyendu.dey@adusa.com (optional)
+    │
+    └─ Send()
+```
+
+---
+
+## 5. File Structure
+
+```
+project/
+│
+├── App.py                    # FastAPI server & main API endpoint
+│   ├─ AgentRequest model
+│   ├─ /agent endpoint
+│   ├─ Prompt parsing logic
+│   └─ Main orchestration
+│
+├── main.py                   # Standalone CLI entry point
+│   ├─ run_agent(prompt)
+│   ├─ get_latest_zip()
+│   └─ Interactive prompt input
+│
+├── utils.py                  # Core business logic
+│   ├─ unzip_file()
+│   ├─ extract_full_summary()
+│   ├─ create_full_excel()
+│   ├─ compare_multiple_excels()
+│   └─ send_email_outlook()
+│
+├── llama_agent.py            # LLaMA NLP integration
+│   └─ decide_input()
+│
+├── guide                     # User documentation
+│
+├── UseCases.Txt              # Example commands
+│
+├── Extract/                  # Extracted ZIP contents
+│   ├─ Sample1/
+│   │  └─ Report/
+│   │     └─ summary.html
+│   └─ Sample2/
+│      └─ Report/
+│         └─ summary.html
+│
+└── Output/                   # Generated Excel files
+    ├─ Sample1.xlsx
+    ├─ Sample2.xlsx
+    └─ comparison_latest_2.xlsx
+```
+
+---
+
+## 6. Key Features
+
+### 6.1 Prompt-Based Commands
+
+The system understands natural language:
+
+```
+# Get latest report
+"get latest lre report"
+    → Finds newest ZIP
+    → Converts to Excel
+    → Returns file path
+
+# Process multiple reports
+"process latest 3 reports"
+    → Finds 3 newest ZIPs
+    → Converts all to Excel
+    → Returns file paths
+
+# Compare reports
+"compare latest 2 reports"
+    → Finds 2 newest ZIPs
+    → Converts to Excel
+    → Merges and adds trends
+    → Returns comparison file
+
+# Email reports
+"send latest report to user@company.com"
+    → Processes report
+    → Sends via Outlook
+    → Confirms delivery
+
+# Combined operations
+"compare latest 2 reports and email to user1@company.com, user2@company.com"
+    → All of the above in one command
+```
+
+### 6.2 Trend Analysis
+
+Comparison reports include intelligent trend detection:
+
+```
+Transaction Performance Comparison
+
+| Transaction | Avg_file1 | Avg_file2 | Trend        |
+|-------------|-----------|-----------|--------------|
+| Login       | 2.0 ms    | 1.5 ms    | ⬆ Improved   |
+| Search      | 1.2 ms    | 1.8 ms    | ⬇ Degraded   |
+| Checkout    | 3.0 ms    | 3.0 ms    | ➖ No Change  |
+
+Logic:
+- If (latest < previous) → ⬆ Improved
+- If (latest > previous) → ⬇ Degraded
+- If (latest == previous) → ➖ No Change
+```
+
+### 6.3 Safety Mechanisms
+
+```
+1. Fallback Path: If user path invalid → use DEFAULT_PATH
+2. Validation: Check folder exists before processing
+3. Skip Invalid: Skip ZIPs without Report/ folder
+4. Email Validation: Verify email format
+5. Error Handling: Catch exceptions, return meaningful errors
+6. Graceful Degradation: Process what's available, skip what isn't
+```
+
+---
+
+## 7. Configuration
+
+### 7.1 Default Settings
+
+| Setting | Value | Purpose |
+|---------|-------|---------|
+| DEFAULT_PATH | `C:\Ahold\Projects\BIDM\Result` | Fallback folder |
+| EXTRACT_FOLDER | `<input>/Extract/` | ZIP extraction |
+| OUTPUT_FOLDER | `<input>/Output/` | Excel generation |
+| EMAIL_SENDER | `dibyendu.dey@adusa.com` | Default Outlook account |
+
+### 7.2 Dependencies
+
+```python
+# Core
+fastapi==0.136.3
+pydantic==2.13.4
+uvicorn==0.49.0
+
+# Data Processing
+pandas>=1.3.0
+numpy>=1.20.0
+
+# HTML Parsing
+beautifulsoup4>=4.9.0
+lxml>=4.6.0
+
+# Email
+pywin32>=300
+
+# File Handling
+zipfile (built-in)
+os (built-in)
+re (built-in)
+```
+
+---
+
+## 8. Running the Application
+
+### 8.1 Start FastAPI Server
+
+```bash
+uvicorn App:app --reload --host 0.0.0.0 --port 8000
+```
+
+Then access:
+- API: `http://localhost:8000`
+- Docs: `http://localhost:8000/docs`
+- ReDoc: `http://localhost:8000/redoc`
+
+### 8.2 Make API Request
+
+```bash
+curl -X POST "http://localhost:8000/agent" \
+  -H "Content-Type: application/json" \
+  -d '{"prompt": "process latest 3 reports"}'
+```
+
+### 8.3 CLI Mode
+
+```bash
+python main.py
+# Prompts: "Enter your requirements: "
+```
+
+---
+
+## 9. Error Handling
+
+### 9.1 Common Errors & Solutions
+
+| Error | Cause | Solution |
+|-------|-------|----------|
+| `No ZIP files found` | Empty folder | Check DEFAULT_PATH or provide valid path |
+| `Report folder not found` | Invalid ZIP structure | Ensure ZIP contains `Report/summary.html` |
+| `No recipient email found` | Missing email in prompt | Include email: `email to user@company.com` |
+| `Author identity unknown` | Git config not set | Run `git config --global user.email` |
+| `Failed to execute git` | No git identity | Set git user name and email |
+
+### 9.2 Error Response
+
+```json
+{
+  "error": "No ZIP files found"
+}
+```
+
+---
+
+## 10. Extension Points
+
+### 10.1 Add New Command
+
+1. Add parsing logic in `decide_input()` (llama_agent.py)
+2. Add business logic in `utils.py`
+3. Add handling in `run_agent_api()` (App.py)
+
+Example:
+```python
+if "archive" in prompt:
+    # New feature: archive old reports
+    archive_reports(output_files)
+```
+
+### 10.2 Add New Output Format
+
+1. Add conversion function in `utils.py`
+2. Detect format in `run_agent_api()`
+3. Return file path in response
+
+Example:
+```python
+def create_csv_report(data, output_file):
+    df = pd.DataFrame(data)
+    df.to_csv(output_file, index=False)
+```
+
+---
+
+## 11. Performance Considerations
+
+| Operation | Time | Notes |
+|-----------|------|-------|
+| ZIP Extraction | ~1-2s | Depends on file size |
+| HTML Parsing | ~0.5s | BeautifulSoup + lxml |
+| Excel Generation | ~1-2s | Pandas write |
+| Multi-report Compare | ~2-3s | Merging + trend analysis |
+| Email Send | ~3-5s | Outlook COM overhead |
+| **Total (3 reports)** | ~10-15s | Sequential processing |
+
+---
+
+## 12. Security Notes
+
+⚠️ **Important Considerations:**
+
+1. **Email Sending**: Requires Outlook to be running
+2. **Path Validation**: Ensure paths are sanitized
+3. **Credentials**: Email uses current Outlook session (no passwords stored)
+4. **File Access**: Requires read/write permissions on folders
+5. **Network**: API is not encrypted by default (use HTTPS in production)
+
+---
+
+## Conclusion
+
+This system demonstrates a **production-ready AI-powered automation agent** that:
+
+✅ Accepts natural language prompts  
+✅ Processes ZIP files automatically  
+✅ Generates professional reports  
+✅ Performs trend analysis  
+✅ Sends emails automatically  
+✅ Provides REST API interface  
+✅ Includes safety fallbacks  
+✅ Handles errors gracefully  
+
+All in **one integrated system**! 🚀
