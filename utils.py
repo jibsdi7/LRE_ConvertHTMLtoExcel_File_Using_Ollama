@@ -102,6 +102,8 @@ def create_full_excel(report_folder, output_file):
 #Compare multiple Excels and add trend analysis
 def compare_multiple_excels(files, output_file):
     import pandas as pd
+    from openpyxl import load_workbook
+    from openpyxl.styles import PatternFill, Font
 
     merged_df = None
 
@@ -169,6 +171,39 @@ def compare_multiple_excels(files, output_file):
     # 💾 SAVE
     # =============================
     merged_df.to_excel(output_file, index=False)
+
+    # =============================
+    # 🎨 APPLY COLOR FORMATTING
+    # =============================
+    workbook = load_workbook(output_file)
+    sheet = workbook.active
+    
+    # Define colors
+    red_fill = PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid")
+    red_font = Font(color="FFFFFF", bold=True)
+    green_fill = PatternFill(start_color="00B050", end_color="00B050", fill_type="solid")
+    green_font = Font(color="FFFFFF", bold=True)
+    
+    # Find Trend column
+    trend_col = None
+    for col_idx, cell in enumerate(sheet[1], 1):
+        if cell.value == "Trend":
+            trend_col = col_idx
+            break
+    
+    # Apply colors to Trend column cells
+    if trend_col:
+        for row_idx in range(2, sheet.max_row + 1):
+            cell = sheet.cell(row=row_idx, column=trend_col)
+            if cell.value:
+                if "Degraded" in str(cell.value):
+                    cell.fill = red_fill
+                    cell.font = red_font
+                elif "Improved" in str(cell.value):
+                    cell.fill = green_fill
+                    cell.font = green_font
+    
+    workbook.save(output_file)
 
     print(f"📊 Comparison with trend created: {output_file}")
 #send email with attachment using Outlook COM
