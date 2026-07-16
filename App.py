@@ -20,7 +20,9 @@ app = FastAPI(
     description="AI Agent for processing, comparing and emailing LRE reports"
 )
 
-DEFAULT_PATH = r"C:\Ahold\Projects\BIDM\Result"
+DEFAULT_PATH = r"C:\Ahold\Projects\agent_test\Result"
+LAST_INPUT_PATH = DEFAULT_PATH
+LAST_COMPARISON_FILE = None
 
 
 # ==========================================
@@ -52,16 +54,43 @@ def get_zip_files(folder):
     ]
 
 
+def get_latest_comparison_file(folder):
+    comparison_files = [
+        os.path.join(folder, f)
+        for f in os.listdir(folder)
+        if f.startswith("comparison_latest_") and f.endswith(".xlsx")
+    ]
+    if not comparison_files:
+        return None
+    comparison_files.sort(key=os.path.getmtime, reverse=True)
+    return comparison_files[0]
+
+
 # ==========================================
 #  Extract count from prompt
 # ==========================================
 def extract_count(prompt):
-    match = re.search(r'latest\s+(\d+)', prompt)
+    patterns = [
+        r'(?:latest|last)\s+(\d+)',
+        r'process\s+report\s+(\d+)',
+        r'(\d+)\s+reports?',
+        r'reports?\s+(\d+)',
+        r'compare\s+(\d+)'
+    ]
 
-    if match:
-        return int(match.group(1))
+    for pattern in patterns:
+        match = re.search(pattern, prompt)
+        if match:
+            return int(match.group(1))
 
     return 1
+
+
+def extract_send_report_index(prompt):
+    match = re.search(r'send\s+report\s+(\d+)', prompt)
+    if match:
+        return int(match.group(1))
+    return None
 
 
 # ==========================================
@@ -79,24 +108,30 @@ def run_agent_api(data: AgentRequest):
 
         print(f" Prompt: {prompt}")
 
+        global LAST_INPUT_PATH
+
         # ==========================================
-        #  Extract input path
+        #  Extract input path or reuse last path
         # ==========================================
         config = decide_input(prompt)
 
-        input_folder = None
-
+        new_input_folder = None
         if isinstance(config, dict):
-            input_folder = config.get("input_path")
+            new_input_folder = config.get("input_path")
 
-        # ==========================================
-        #  Safe fallback
-        # ==========================================
-        if not input_folder or not os.path.exists(str(input_folder)):
-            print("Using default path")
-            input_folder = DEFAULT_PATH
-
-        input_folder = str(input_folder).strip().replace('"', '')
+        if new_input_folder:
+            candidate_folder = str(new_input_folder).strip().replace('"', '')
+            if not os.path.exists(candidate_folder):
+                return {"error": f"Invalid path: {candidate_folder}"}
+            input_folder = candidate_folder
+            LAST_INPUT_PATH = input_folder
+            print(f"✅ New path set: {input_folder}")
+        else:
+            input_folder = LAST_INPUT_PATH
+            if not os.path.exists(input_folder):
+                print(f"⚠️ Last path is not available, falling back to default path: {DEFAULT_PATH}")
+                input_folder = DEFAULT_PATH
+                LAST_INPUT_PATH = input_folder
 
         if not os.path.exists(input_folder):
             return {"error": f"Invalid path: {input_folder}"}
@@ -184,26 +219,34 @@ def run_agent_api(data: AgentRequest):
         # ==========================================
         #  COMPARE REPORTS
         # ==========================================
-        if "compare" in prompt:
+        if "compare" in prompt or "comparison" in prompt:
 
             if len(output_files) < 2:
-                return {"error": "Need at least 2 reports to compare"}
+                existing_comparison = get_latest_comparison_file(output_folder)
+                if existing_comparison:
+                    comparison_file = existing_comparison
+                    print(f" Using existing comparison: {comparison_file}")
+                else:
+                    return {"error": "Need at least 2 reports to compare"}
+            else:
+                comparison_file = os.path.join(
+                    output_folder,
+                    f"comparison_latest_{len(output_files)}.xlsx"
+                )
 
-            comparison_file = os.path.join(
-                output_folder,
-                f"comparison_latest_{len(output_files)}.xlsx"
-            )
+                compare_multiple_excels(
+                    output_files,
+                    comparison_file
+                )
 
-            compare_multiple_excels(
-                output_files,
-                comparison_file
-            )
+                print(f" Comparison created: {comparison_file}")
 
-            print(f" Comparison created: {comparison_file}")
+                global LAST_COMPARISON_FILE
+                LAST_COMPARISON_FILE = comparison_file
 
         # ==========================================
         #  EMAIL LOGIC
-        # ==========================================
+        # =========================================
         if "email" in prompt or "send" in prompt:
 
             recipients = extract_emails(prompt)
@@ -213,19 +256,31 @@ def run_agent_api(data: AgentRequest):
 
             file_to_send = None
 
-            #  Prefer comparison report
+            #  Prefer comparison report when prompt asks for it
+            if ("compare" in prompt or "comparison" in prompt) and not comparison_file:
+                existing_comparison = get_latest_comparison_file(output_folder)
+                if existing_comparison:
+                    comparison_file = existing_comparison
+                    print(f" Using existing comparison for email: {comparison_file}")
+
             if comparison_file and os.path.exists(comparison_file):
                 file_to_send = comparison_file
 
+            elif ("compare" in prompt or "comparison" in prompt):
+                return {"error": "No comparison file available to send"}
+
             elif output_files:
-                file_to_send = output_files[0]
+                if len(output_files) == 1:
+                    file_to_send = output_files[0]
+                else:
+                    file_to_send = output_files
 
             if not file_to_send:
                 return {"error": "No file available to send"}
 
             send_email_outlook(
                 subject="LRE Report",
-                body="Please find attached report.",
+                body="Please find attached report(s).",
                 to=";".join(recipients),
                 attachment_path=file_to_send,
                 sender="dibyendu.dey@adusa.com"

@@ -224,7 +224,11 @@ def send_email_outlook(subject, body, to, attachment_path, sender=None):
                 mail._oleobj_.Invoke(*(64209, 0, 8, 0, account))  # magic line
                 break
 
-    if attachment_path and os.path.exists(attachment_path):
+    if isinstance(attachment_path, (list, tuple)):
+        for path in attachment_path:
+            if path and os.path.exists(path):
+                mail.Attachments.Add(path)
+    elif attachment_path and os.path.exists(attachment_path):
         mail.Attachments.Add(attachment_path)
 
     mail.Send()

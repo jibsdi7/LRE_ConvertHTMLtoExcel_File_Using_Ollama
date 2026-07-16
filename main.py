@@ -2,7 +2,8 @@ import os
 from utils import unzip_file, create_full_excel
 from llama_agent import decide_input
 
-DEFAULT_PATH = r"C:\Ahold\Projects\BIDM\Result"
+DEFAULT_PATH = r"C:\Ahold\Projects\agent_test\Result"
+LAST_INPUT_PATH = DEFAULT_PATH
 # ✅ Correct columns (based on your data)
 
 
@@ -20,17 +21,32 @@ def get_latest_zip(folder):
     return max(zip_files, key=os.path.getmtime)
 
 def run_agent(prompt):
+    global LAST_INPUT_PATH
+
     # 🧠 Get input from LLaMA
     config = decide_input(prompt)
 
-    # 🎯 Default path (used if user doesn't provide one)
-    DEFAULT_PATH = r"C:\Ahold\Projects\BIDM\Result"
+    # ✅ Determine input folder
+    new_input_folder = None
+    if isinstance(config, dict):
+        new_input_folder = config.get("input_path")
 
-    # ✅ Dynamic input folder
-    
-    input_folder = config.get("input_path", DEFAULT_PATH)
+    if new_input_folder:
+        candidate_folder = str(new_input_folder).strip().replace('"', '')
+        if not os.path.exists(candidate_folder):
+            print(f"❌ Invalid path: {candidate_folder}")
+            return
+        input_folder = candidate_folder
+        LAST_INPUT_PATH = input_folder
+        print(f"✅ New path set: {input_folder}")
+    else:
+        input_folder = LAST_INPUT_PATH
+        if not os.path.exists(input_folder):
+            print(f"⚠️ Last path is not available, falling back to default path: {DEFAULT_PATH}")
+            input_folder = DEFAULT_PATH
+            LAST_INPUT_PATH = input_folder
 
-     #Clean path (handles quotes/spaces from LLM)
+    #Clean path (handles quotes/spaces from LLM)
     input_folder = input_folder.strip().replace('"', '')
 
     if not os.path.exists(input_folder):
